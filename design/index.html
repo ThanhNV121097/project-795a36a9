@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todo List App v4</title>
+  <style>
+    :root{
+      --blue:#2563eb;--blue-dark:#1d4ed8;--sky:#eff6ff;--bg:#f8fafc;--surface:#ffffff;
+      --text:#0f172a;--muted:#64748b;--line:#dbeafe;--green:#10b981;--red:#ef4444;
+      --shadow:0 24px 60px rgba(37,99,235,.14);--radius:24px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,#dbeafe 0,#f8fafc 34rem);color:var(--text);min-height:100vh}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    button:disabled{cursor:not-allowed;opacity:.55}
+    a,button,input{outline:none}
+    a:focus-visible,button:focus-visible,input:focus-visible{box-shadow:0 0 0 4px rgba(37,99,235,.24),0 0 0 1px var(--blue)}
+    .shell{max-width:1120px;margin:0 auto;padding:28px 20px 64px}
+    .hero{display:grid;grid-template-columns:1.02fr .98fr;gap:34px;align-items:center;min-height:calc(100vh - 92px)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);background:rgba(255,255,255,.72);border-radius:999px;color:var(--blue-dark);font-weight:700;font-size:13px;backdrop-filter:blur(10px)}
+    .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(16,185,129,.6);animation:pulse 1.8s infinite}
+    h1{font-size:clamp(42px,7vw,78px);line-height:.95;letter-spacing:-.06em;margin:22px 0 18px}
+    .lede{font-size:19px;line-height:1.7;color:var(--muted);max-width:590px;margin:0 0 28px}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:30px}
+    .btn{border:0;border-radius:16px;padding:13px 18px;font-weight:800;display:inline-flex;align-items:center;gap:10px;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+    .btn:hover{transform:translateY(-2px)}
+    .btn-primary{background:var(--blue);color:#fff;box-shadow:0 14px 28px rgba(37,99,235,.28)}
+    .btn-primary:hover{background:var(--blue-dark)}
+    .btn-soft{background:#fff;color:var(--blue-dark);border:1px solid var(--line)}
+    .metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:560px}
+    .metric{background:rgba(255,255,255,.76);border:1px solid var(--line);border-radius:18px;padding:16px;backdrop-filter:blur(10px)}
+    .metric strong{display:block;font-size:24px}.metric span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+    .app-card{background:rgba(255,255,255,.92);border:1px solid rgba(219,234,254,.9);border-radius:32px;box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden;animation:rise .65s ease both}
+    .app-card:before{content:"";position:absolute;inset:0 0 auto;height:7px;background:linear-gradient(90deg,var(--blue),#60a5fa,var(--green))}
+    .app-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 20px}
+    .app-title h2{margin:0;font-size:24px;letter-spacing:-.03em}.app-title p{margin:4px 0 0;color:var(--muted);font-size:14px}
+    .status-pill{border:1px solid var(--line);background:var(--sky);color:var(--blue-dark);border-radius:999px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
+    .todo-form{display:flex;gap:10px;margin-bottom:12px}
+    .todo-form input{flex:1;border:1px solid #bfdbfe;border-radius:16px;padding:14px 15px;background:#fff;color:var(--text);transition:border .18s ease,box-shadow .18s ease}
+    .todo-form input::placeholder{color:#94a3b8}
+    .field-error{min-height:20px;color:var(--red);font-size:13px;font-weight:700;margin:0 0 8px;padding-left:3px}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 16px;flex-wrap:wrap}
+    .filters{display:flex;background:#eff6ff;border:1px solid #dbeafe;border-radius:14px;padding:4px;gap:4px}
+    .filter{border:0;background:transparent;color:var(--muted);border-radius:10px;padding:8px 10px;font-weight:800;font-size:13px}.filter.active{background:#fff;color:var(--blue-dark);box-shadow:0 6px 14px rgba(37,99,235,.12)}
+    .sync{color:var(--muted);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}.sync.loading .sync-dot{background:#f59e0b;animation:pulse 1s infinite}.sync.error .sync-dot{background:var(--red)}
+    .todo-list{display:grid;gap:10px;margin:0;padding:0;list-style:none;min-height:140px}
+    .todo{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid #e0edff;background:#fff;border-radius:18px;padding:12px;transition:transform .18s ease,border .18s ease,background .18s ease,opacity .18s ease}.todo:hover{transform:translateY(-1px);border-color:#bfdbfe}.todo.done{background:#f8fafc;color:#94a3b8}.todo.done .todo-text{text-decoration:line-through}
+    .check{width:28px;height:28px;border-radius:10px;border:2px solid #bfdbfe;background:#fff;display:grid;place-items:center;color:#fff;transition:background .18s ease,border .18s ease}.todo.done .check{background:var(--green);border-color:var(--green)}
+    .todo-text{font-weight:750;line-height:1.35}.todo-meta{display:block;color:var(--muted);font-size:12px;font-weight:650;margin-top:3px}.delete{border:0;background:#fee2e2;color:#b91c1c;border-radius:12px;padding:8px 10px;font-weight:900}.delete:hover{background:#fecaca}
+    .empty,.loading,.error-state{border:1px dashed #bfdbfe;border-radius:20px;background:#f8fbff;padding:22px;text-align:center;color:var(--muted)}
+    .empty svg,.loading svg,.error-state svg{display:block;margin:0 auto 10px}.empty strong,.loading strong,.error-state strong{display:block;color:var(--text);margin-bottom:4px}.error-state{border-color:#fecaca;background:#fff7f7}.error-state strong{color:#b91c1c}
+    .spinner{width:30px;height:30px;border-radius:50%;border:4px solid #dbeafe;border-top-color:var(--blue);animation:spin .8s linear infinite;margin:0 auto 10px}
+    .section{margin-top:24px}.section-title{font-size:18px;margin:0 0 10px;letter-spacing:-.02em}.state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.mini-card{border:1px solid var(--line);background:#fff;border-radius:20px;padding:16px;min-height:156px}
+    @keyframes pulse{70%{box-shadow:0 0 0 10px rgba(16,185,129,0)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    @media (max-width:860px){.hero{grid-template-columns:1fr;min-height:auto;padding-top:28px}.metrics,.state-grid{grid-template-columns:1fr}.todo-form{flex-direction:column}.btn{justify-content:center}.app-head{align-items:flex-start;flex-direction:column}}
+    @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero" id="todo-app">
+      <div>
+        <span class="eyebrow"><span class="pulse"></span>Single page. No login. Fast tasks.</span>
+        <h1>Clear today in one calm list.</h1>
+        <p class="lede">Todo List App v4 keeps task capture, completion, and cleanup on one polished page. It feels instant, saves changes, and stays keyboard friendly.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#app-card">Open todo list</a>
+          <a class="btn btn-soft" href="#states">View states</a>
+        </div>
+        <div class="metrics" aria-label="App highlights">
+          <div class="metric"><strong id="metric-total">3</strong><span>Total tasks</span></div>
+          <div class="metric"><strong id="metric-open">2</strong><span>Open right now</span></div>
+          <div class="metric"><strong id="metric-done">1</strong><span>Completed</span></div>
+        </div>
+      </div>
+      <article class="app-card" id="app-card" aria-label="Todo list preview">
+        <div class="app-head">
+          <div class="app-title">
+            <h2>Today</h2>
+            <p id="today-copy">2 open tasks. One quick win away.</p>
+          </div>
+          <span class="status-pill" id="status-pill">Saved</span>
+        </div>
+
+        <form class="todo-form" id="todo-form" novalidate>
+          <label class="sr-only" for="todo-input" style="position:absolute;left:-9999px">New task</label>
+          <input id="todo-input" name="task" autocomplete="off" maxlength="80" placeholder="Add a task, e.g. Review product notes">
+          <button class="btn btn-primary" id="add-btn" type="submit" disabled>Add task</button>
+        </form>
+        <p class="field-error" id="field-error" role="alert"></p>
+
+        <div class="toolbar">
+          <div class="filters" aria-label="Filter tasks">
+            <button class="filter active" type="button" data-filter="all">All</button>
+            <button class="filter" type="button" data-filter="open">Open</button>
+            <button class="filter" type="button" data-filter="done">Done</button>
+          </div>
+          <div class="sync" id="sync"><span class="sync-dot"></span><span id="sync-text">All changes saved</span></div>
+        </div>
+
+        <div class="loading" id="loading-state" hidden>
+          <div class="spinner" aria-hidden="true"></div>
+          <strong>Loading saved tasks</strong>
+          <span>Pulling latest list from persistent storage.</span>
+        </div>
+
+        <ul class="todo-list" id="todo-list" aria-live="polite"></ul>
+
+        <div class="empty" id="empty-state" hidden>
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true"><rect x="7" y="8" width="30" height="28" rx="8" fill="#DBEAFE"/><path d="M15 22l5 5 10-12" stroke="#2563EB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <strong>No tasks here</strong>
+          <span>Add one task above, then mark it complete when finished.</span>
+        </div>
+
+        <div class="error-state" id="error-state" hidden>
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true"><circle cx="22" cy="22" r="16" fill="#FEE2E2"/><path d="M22 13v12" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/><circle cx="22" cy="31" r="2" fill="#EF4444"/></svg>
+          <strong>Storage hiccup</strong>
+          <span>Task stays visible. Try again after connection recovers.</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" id="states" aria-label="Todo state examples">
+      <h2 class="section-title">Reachable states</h2>
+      <div class="state-grid">
+        <div class="mini-card loading">
+          <div class="spinner" aria-hidden="true"></div>
+          <strong>Loading</strong>
+          <span>Shown briefly while saved tasks restore.</span>
+        </div>
+        <div class="mini-card empty">
+          <svg width="38" height="38" viewBox="0 0 44 44" fill="none" aria-hidden="true"><rect x="7" y="8" width="30" height="28" rx="8" fill="#DBEAFE"/><path d="M15 22l5 5 10-12" stroke="#2563EB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <strong>Empty</strong>
+          <span>Clear prompt appears when filter has no tasks.</span>
+        </div>
+        <div class="mini-card error-state">
+          <svg width="38" height="38" viewBox="0 0 44 44" fill="none" aria-hidden="true"><circle cx="22" cy="22" r="16" fill="#FEE2E2"/><path d="M22 13v12" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/><circle cx="22" cy="31" r="2" fill="#EF4444"/></svg>
+          <strong>Error</strong>
+          <span>Inline, recoverable, no data loss message.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const initialTasks = [
+      { id: 1, text: 'Review product notes', done: false },
+      { id: 2, text: 'Plan tomorrow morning', done: false },
+      { id: 3, text: 'Clear inbox follow-ups', done: true }
+    ];
+    let tasks = [...initialTasks];
+    let filter = 'all';
+    const form = document.getElementById('todo-form');
+    const input = document.getElementById('todo-input');
+    const addBtn = document.getElementById('add-btn');
+    const list = document.getElementById('todo-list');
+    const empty = document.getElementById('empty-state');
+    const loading = document.getElementById('loading-state');
+    const errorState = document.getElementById('error-state');
+    const error = document.getElementById('field-error');
+    const sync = document.getElementById('sync');
+    const syncText = document.getElementById('sync-text');
+    const pill = document.getElementById('status-pill');
+    const todayCopy = document.getElementById('today-copy');
+
+    function setSaving(state){
+      sync.className = 'sync' + (state === 'loading' ? ' loading' : state === 'error' ? ' error' : '');
+      syncText.textContent = state === 'loading' ? 'Saving change...' : state === 'error' ? 'Could not save yet' : 'All changes saved';
+      pill.textContent = state === 'loading' ? 'Saving' : state === 'error' ? 'Retry needed' : 'Saved';
+    }
+    function visibleTasks(){
+      if(filter === 'open') return tasks.filter(t => !t.done);
+      if(filter === 'done') return tasks.filter(t => t.done);
+      return tasks;
+    }
+    function updateStats(){
+      const done = tasks.filter(t => t.done).length;
+      const open = tasks.length - done;
+      document.getElementById('metric-total').textContent = tasks.length;
+      document.getElementById('metric-open').textContent = open;
+      document.getElementById('metric-done').textContent = done;
+      todayCopy.textContent = open === 0 ? 'All clear. Nice work.' : `${open} open ${open === 1 ? 'task' : 'tasks'}. One quick win away.`;
+    }
+    function render(){
+      const items = visibleTasks();
+      list.innerHTML = '';
+      items.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'todo' + (task.done ? ' done' : '');
+        li.innerHTML = `
+          <button class="check" type="button" aria-label="${task.done ? 'Mark incomplete' : 'Mark complete'}">${task.done ? '✓' : ''}</button>
+          <div><span class="todo-text"></span><span class="todo-meta">${task.done ? 'Completed' : 'Open'} · saved to list</span></div>
+          <button class="delete" type="button" aria-label="Delete task">Delete</button>`;
+        li.querySelector('.todo-text').textContent = task.text;
+        li.querySelector('.check').addEventListener('click', () => toggleTask(task.id));
+        li.querySelector('.delete').addEventListener('click', () => deleteTask(task.id));
+        list.appendChild(li);
+      });
+      empty.hidden = items.length !== 0;
+      updateStats();
+    }
+    function fakePersist(shouldError=false){
+      setSaving('loading');
+      errorState.hidden = true;
+      window.setTimeout(() => {
+        if(shouldError){ setSaving('error'); errorState.hidden = false; return; }
+        setSaving('saved');
+      }, 450);
+    }
+    function toggleTask(id){
+      tasks = tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
+      render();
+      fakePersist(false);
+    }
+    function deleteTask(id){
+      tasks = tasks.filter(t => t.id !== id);
+      render();
+      fakePersist(false);
+    }
+    input.addEventListener('input', () => {
+      addBtn.disabled = input.value.trim().length === 0;
+      if(input.value.trim().length) error.textContent = '';
+    });
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if(!text){ error.textContent = 'Enter a task before adding it.'; input.focus(); return; }
+      tasks = [{ id: Date.now(), text, done: false }, ...tasks];
+      input.value = '';
+      addBtn.disabled = true;
+      error.textContent = '';
+      filter = 'all';
+      document.querySelectorAll('.filter').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === filter));
+      render();
+      fakePersist(text.toLowerCase().includes('error'));
+    });
+    document.querySelectorAll('.filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        filter = btn.dataset.filter;
+        document.querySelectorAll('.filter').forEach(other => other.classList.toggle('active', other === btn));
+        render();
+      });
+    });
+    loading.hidden = false;
+    list.hidden = true;
+    window.setTimeout(() => {
+      loading.hidden = true;
+      list.hidden = false;
+      render();
+    }, 650);
+  </script>
+</body>
+</html>
