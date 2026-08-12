@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,11 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ThanhNV121097/project-795a36a9/backend/migrations"
 	"github.com/jackc/pgx/v5"
 )
-
-//go:embed ../../migrations/*.up.sql
-var migrationFiles embed.FS
 
 func main() {
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -59,7 +56,7 @@ func migrate(ctx context.Context, conn *pgx.Conn) error {
 	if _, err := conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`); err != nil {
 		return err
 	}
-	entries, err := migrationFiles.ReadDir("../../migrations")
+	entries, err := migrations.Files.ReadDir(".")
 	if err != nil {
 		return err
 	}
@@ -79,7 +76,7 @@ func migrate(ctx context.Context, conn *pgx.Conn) error {
 		if exists {
 			continue
 		}
-		sql, err := migrationFiles.ReadFile("../../migrations/" + name)
+		sql, err := migrations.Files.ReadFile(name)
 		if err != nil {
 			return err
 		}
